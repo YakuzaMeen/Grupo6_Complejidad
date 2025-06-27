@@ -1,38 +1,56 @@
 # Complejidad Algorítmica - Grupo 6
 
-Proyecto de visualización y análisis de redes de gas natural.
+Visualización y análisis de grafos para el curso de Complejidad Algorítmica.
 
 ## Requisitos
 
-- Python 3.8+
-- Flask
-- pandas
-- geopandas
-- networkx
-- scikit-learn
+- Python 3.8 o superior
+- pip (gestor de paquetes de Python)
+- (Opcional) Crear un entorno virtual
 
-Puedes instalar las dependencias ejecutando:
+## Instalación
 
-```bash
-pip install flask pandas geopandas networkx scikit-learn
-```
+1. **Clona este repositorio:**
+   ```sh
+   git clone https://github.com/YakuzaMeen/Grupo6_Complejidad.git
+   cd Grupo6_Complejidad
+   ```
 
-## Uso
+2. **(Opcional) Crea y activa un entorno virtual:**
+   ```sh
+   python -m venv venv
+   # En Windows:
+   venv\Scripts\activate
+   # En Mac/Linux:
+   source venv/bin/activate
+   ```
 
-1. Clona el repositorio:
-    ```bash
-    git clone https://github.com/YakuzaMeen/Complejidad_Grupo6.git
-    cd Complejidad_Grupo6
-    ```
+3. **Instala las dependencias:**
+   ```sh
+   pip install -r requirements.txt
+   ```
+   > Si no tienes `requirements.txt`, instala manualmente:
+   ```sh
+   pip install flask pandas networkx scikit-learn geopandas
+   ```
 
-2. Ejecuta la aplicación:
-    ```bash
-    python src/app.py
-    ```
+4. **Asegúrate de tener el archivo de datos `ly_osi_tramos.xlsx` en la raíz del proyecto (no se sube a GitHub por su tamaño).**
 
-3. Abre tu navegador en [http://localhost:5000](http://localhost:5000)
+## Ejecución
+
+1. Ejecuta el servidor Flask:
+   ```sh
+   python app.py
+   ```
+
+2. Abre tu navegador y entra a [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
 
-**Autores:**    
-U202212214@upc.edu.pe
+**Nota:**  
+El archivo `ly_osi_tramos.xlsx` es necesario para el análisis, pero no está incluido en el repositorio por su tamaño. Solicítalo a un miembro del grupo si lo necesitas.
+
+---
+
+**Desarrollado por:**  
+-U202212214@upc.edu.pe
