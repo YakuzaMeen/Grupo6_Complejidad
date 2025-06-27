@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Complejidad Algorítmica - Grupo 6</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- D3.js CDN para visualización de grafos -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+    <header>
+        <h1>Complejidad Algorítmica - Grupo 6</h1>
+    </header>
+    <main style="display: flex; gap: 32px; margin: 0 32px 32px 32px;">
+        <section style="flex: 2;">
+            <div id="graph-container" style="background: #fff; border-radius: 12px; min-height: 400px; margin-bottom: 16px; box-shadow: 0 2px 8px #0001;"></div>
+            <div id="controls" style="margin-bottom: 16px;">
+                <button id="load-graph" class="btn-primary">Cargar Grafo</button>
+            </div>
+            <div id="mst-info"></div>
+            <div id="node-info"></div>
+        </section>
+        <aside style="flex: 1;">
+            <div id="log-panel">
+                <h2>Bitácora de Ejecución</h2>
+                <div id="log-output"></div>
+            </div>
+        </aside>
+    </main>
+    <footer>
+        <p>Desarrollado por YakuzaMeen - U202212214@upc.edu.pe</p>
+    </footer>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>

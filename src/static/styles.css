@@ -1,0 +1,131 @@
+/* General */
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: #1976d2;
+    color: #fff;
+    padding: 24px 0 12px 32px;
+    margin-bottom: 24px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2em;
+}
+
+main {
+    display: flex;
+    gap: 32px;
+    margin: 0 32px 32px 32px;
+}
+
+#graph-container {
+    background: #fff;
+    border-radius: 10px;
+    min-height: 400px;
+    box-shadow: 0 2px 8px #0001;
+    margin-bottom: 24px;
+    padding: 16px;
+}
+
+#controls {
+    margin-bottom: 18px;
+}
+
+#controls button {
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#controls button:hover {
+    background: #1565c0;
+}
+
+/* Log Panel */
+#log-panel {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #0001;
+    padding: 18px;
+    min-width: 420px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 500px;
+    overflow-y: visible;
+}
+
+#log-panel h2 {
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 18px;
+}
+
+/* Bloques de log de colores alternos */
+.log-block {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px #0001;
+    border-left: 5px solid #1976d2;
+    font-size: 1em;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Colores distintos para cada bloque */
+.log-blue   { background: #e3f2fd; border-left-color: #1976d2; }
+.log-red    { background: #ffebee; border-left-color: #d32f2f; }
+.log-yellow { background: #fffde7; border-left-color: #fbc02d; }
+.log-green  { background: #e8f5e9; border-left-color: #388e3c; }
+.log-brown  { background: #efebe9; border-left-color: #8d6e63; }
+
+/* Palabras clave resaltadas */
+.log-keyword {
+    font-weight: bold;
+    color: #1565c0;
+    background: #e3f2fd;
+    border-radius: 5px;
+    padding: 2px 6px;
+    margin: 0 2px;
+    display: inline-block;
+}
+.log-error {
+    color: #fff;
+    background: #d32f2f;
+}
+.log-warning {
+    color: #fff;
+    background: #fbc02d;
+}
+
+/* MST info */
+.mst-info-block {
+    background: #e3f2fd;
+    border-left: 5px solid #1976d2;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+    font-size: 1.1em;
+    color: #0d47a1;
+    font-weight: bold;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    color: #888;
+    padding: 18px 0 12px 0;
+    font-size: 0.95em;
+}
