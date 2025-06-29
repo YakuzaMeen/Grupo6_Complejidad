@@ -1,18 +1,29 @@
 /* General */
+html, body {
+    height: 100%; /* Hacemos que html y body ocupen el 100% del alto del viewport */
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* IMPORTANTE: Oculta cualquier scrollbar del body/html. El scroll principal lo gestionarán las columnas internas. */
+    box-sizing: border-box; /* Aseguramos que padding y border se incluyan en el ancho/alto total */
+}
+
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #f5f7fa;
-    margin: 0;
-    padding: 0;
+    display: flex;
+    flex-direction: column; /* Para que header, main y footer se apilen verticalmente */
+    box-sizing: border-box; /* Asegurar box-sizing para el body */
 }
 
 header {
     background: #1976d2;
     color: #fff;
     padding: 24px 0 12px 32px;
-    margin-bottom: 24px;
+    margin-bottom: 0; /* Eliminado margin-bottom para un control más preciso con el padding de main */
     border-bottom-left-radius: 18px;
     border-bottom-right-radius: 18px;
+    flex-shrink: 0; /* Evita que el header se encoja */
+    box-sizing: border-box; /* Asegurar box-sizing para el header */
 }
 
 header h1 {
@@ -22,24 +33,34 @@ header h1 {
 
 main {
     display: flex;
-    gap: 32px;
-    margin: 0 32px 32px 32px;
+    gap: 32px; /* Espacio horizontal entre las columnas */
+    padding: 32px; /* Padding general para el contenido principal (arriba, abajo, izquierda, derecha) */
+    flex-grow: 1; /* Permite que main ocupe el espacio restante verticalmente */
+    overflow: hidden; /* IMPORTANTE: Oculta cualquier scrollbar de main */
+    box-sizing: border-box; /* Incluir padding en el cálculo de altura/ancho */
 }
 
-#graph-container {
+/* Estilos para el contenedor del mapa Leaflet */
+#map-container {
     background: #fff;
     border-radius: 10px;
-    min-height: 400px;
+    height: 500px; /* Altura fija para el mapa */
     box-shadow: 0 2px 8px #0001;
-    margin-bottom: 24px;
-    padding: 16px;
+    margin-bottom: 24px; /* Espacio debajo del mapa */
+    flex-shrink: 0; /* Asegurar que el mapa no se encoja */
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
 
+/* Estilos para los controles */
 #controls {
     margin-bottom: 18px;
+    flex-shrink: 0; /* Asegurar que los controles no se encojan */
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
 
-#controls button {
+#controls button,
+#calculate-route-btn,
+.tab-button {
     background: #1976d2;
     color: #fff;
     border: none;
@@ -48,29 +69,176 @@ main {
     font-size: 1em;
     cursor: pointer;
     transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
-#controls button:hover {
+
+#controls button:hover,
+#calculate-route-btn:hover,
+.tab-button:hover {
     background: #1565c0;
 }
 
-/* Log Panel */
-#log-panel {
+#controls button::before,
+#calculate-route-btn::before,
+.tab-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 300%;
+    height: 100%;
+    background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet, red);
+    background-size: 300%;
+    animation: shimmer-rgb 2s linear infinite;
+    z-index: 0;
+    opacity: 0.5;
+}
+
+#controls button:hover::before,
+#calculate-route-btn:hover::before,
+.tab-button:hover::before {
+    left: -100%;
+}
+
+#controls button span,
+#calculate-route-btn span,
+.tab-button span {
+    position: relative;
+    z-index: 2;
+}
+
+/* Estilo para los campos de entrada del Módulo 3 */
+.input-field {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95em;
+    box-sizing: border-box; /* Asegura que padding y border estén dentro del ancho total */
+}
+.input-field::placeholder {
+    color: #999;
+}
+
+/* === Control de Ancho y Altura para las Columnas Principales === */
+section { /* Columna del mapa (Izquierda) */
+    flex: 1; /* Permite que ocupe el espacio restante horizontalmente */
+    min-width: 350px; /* Asegura que el mapa no se haga demasiado pequeño */
+    display: flex; /* Para apilar el mapa y controles verticalmente */
+    flex-direction: column; /* Para apilar el mapa y controles verticalmente */
+    overflow-y: auto; /* Aquí va el scroll principal para la columna izquierda si su contenido es muy largo */
+    box-sizing: border-box; /* Incluir padding/border en el cálculo de altura */
+    padding-bottom: 0; /* Remove padding from section, now handled by main's padding */
+}
+
+aside { /* Columna de la barra lateral (paneles) (Derecha) */
+    width: 450px; /* Ancho fijo para la barra lateral */
+    flex-shrink: 0; /* Previene que se encoja por debajo de su width */
+    display: flex;
+    flex-direction: column;
+    /* Calcular la altura restante para 'aside'
+       100vh (altura del viewport)
+       - padding-top header (24px)
+       - padding-bottom header (12px)
+       - main's top padding (32px)
+       - main's bottom padding (32px)
+       - padding-top footer (18px)
+       - padding-bottom footer (12px)
+       = 100vh - (24 + 12 + 32 + 32 + 18 + 12) = 100vh - 130px
+    */
+    height: calc(100vh - 130px);
+    overflow: hidden; /* IMPORTANTE: Asegura que 'aside' NO tenga su propio scrollbar */
+    box-sizing: border-box; /* Incluir padding/border en el cálculo de altura */
+    padding-bottom: 0; /* Remove padding from aside, now handled by main's padding */
+}
+
+/* --- Estilos para la interfaz de Pestañas (Tabs) --- */
+#tab-container {
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px #0001;
-    padding: 18px;
-    min-width: 420px;
-    width: 100%;
+    padding: 18px; /* Padding interno del contenedor de pestañas */
+    width: 100%; /* 100% del ancho de su padre 'aside' */
     max-width: 100%;
-    min-height: 500px;
-    overflow-y: visible;
+    flex-grow: 1; /* Permite que el contenedor de pestañas ocupe el espacio restante en 'aside' */
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box; /* Para que el padding no añada ancho extra y se ajuste al 100% de la altura disponible */
+    overflow: hidden; /* IMPORTANTE: Oculta cualquier overflow no deseado aquí */
 }
 
-#log-panel h2 {
+.tab-buttons {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex-shrink: 0; /* Para que los botones no se encojan si hay poco espacio */
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
+.tab-button.active {
+    background: #1976d2;
+    color: #fff;
+    border-bottom: 3px solid #1976d2;
+    z-index: 2;
+}
+
+.tab-content {
+    flex-grow: 1; /* Ocupa el espacio restante dentro de #tab-container */
+    padding: 10px; /* Padding general para el contenido de la pestaña */
+    overflow-y: auto; /* ¡AQUÍ VA EL SCROLL PRINCIPAL DE CADA PESTAÑA! */
+    background: #fff;
+    border-radius: 0 0 10px 10px;
+    display: none; /* Controlado por JS */
+    flex-direction: column; /* Para que el contenido interno se apile correctamente */
+    box-sizing: border-box; /* Incluir padding en altura/ancho */
+}
+
+/* Asegurar que los títulos de los paneles no causen desbordamiento */
+.tab-content h2 {
     font-size: 1.2em;
     margin-top: 0;
     margin-bottom: 18px;
+    padding: 0 5px; /* Pequeño padding para el texto del título */
+    flex-shrink: 0; /* Para que el título no se encoja */
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
+
+#log-output { /* Contenido de la bitácora, dentro de #log-panel-content (.tab-content) */
+    flex-grow: 1; /* Para que la bitácora ocupe el espacio restante dentro de su .tab-content */
+    min-height: 100px; /* Altura mínima para asegurar visibilidad inicial */
+    padding: 0 5px; /* Padding interno para que el texto no toque los bordes */
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
+/* Ajustes para el contenido de la pestaña de rutas */
+#route-panel-content {
+    display: flex; /* Asegurarse de que el contenido de rutas sea flexible */
+    flex-direction: column;
+}
+
+#route-panel-content .input-field-container { /* Un contenedor si quieres flex en los inputs */
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
+#route-info {
+    flex-shrink: 0; /* Para que la info de ruta no se encoja */
+    padding: 0 5px;
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
 
 /* Bloques de log de colores alternos */
 .log-block {
@@ -78,20 +246,19 @@ main {
     padding: 12px 16px;
     margin-bottom: 16px;
     box-shadow: 0 1px 4px #0001;
-    border-left: 5px solid #1976d2;
+    border-left: 5px solid;
     font-size: 1em;
     white-space: pre-wrap;
     word-break: break-word;
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
 
-/* Colores distintos para cada bloque */
-.log-blue   { background: #e3f2fd; border-left-color: #1976d2; }
-.log-red    { background: #ffebee; border-left-color: #d32f2f; }
+.log-blue { background: #e3f2fd; border-left-color: #1976d2; }
+.log-red { background: #ffebee; border-left-color: #d32f2f; }
 .log-yellow { background: #fffde7; border-left-color: #fbc02d; }
-.log-green  { background: #e8f5e9; border-left-color: #388e3c; }
-.log-brown  { background: #efebe9; border-left-color: #8d6e63; }
+.log-green { background: #e8f5e9; border-left-color: #388e3c; }
+.log-brown { background: #efebe9; border-left-color: #8d6e63; }
 
-/* Palabras clave resaltadas */
 .log-keyword {
     font-weight: bold;
     color: #1565c0;
@@ -100,6 +267,7 @@ main {
     padding: 2px 6px;
     margin: 0 2px;
     display: inline-block;
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
 .log-error {
     color: #fff;
@@ -110,7 +278,6 @@ main {
     background: #fbc02d;
 }
 
-/* MST info */
 .mst-info-block {
     background: #e3f2fd;
     border-left: 5px solid #1976d2;
@@ -120,12 +287,55 @@ main {
     font-size: 1.1em;
     color: #0d47a1;
     font-weight: bold;
+    box-sizing: border-box; /* Asegurar box-sizing */
 }
 
-/* Footer */
+.node-block { /* Contenedor de #node-text-content y #node-gas-chart, dentro de #node-info-panel-content (.tab-content) */
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 15px; /* Padding interno */
+    font-size: 0.9em;
+    line-height: 1.6;
+    border: 1px solid #e0e0e0;
+    box-sizing: border-box; /* Incluir padding en altura/ancho */
+    max-width: 100%;
+    flex-grow: 1; /* Permite que el node-block ocupe el espacio vertical restante dentro de su padre (.tab-content) */
+    display: flex; /* Para apilar texto y canvas */
+    flex-direction: column; /* Para apilar texto y canvas */
+}
+
+/* Contenido de texto del nodo */
+#node-text-content {
+    flex-shrink: 0; /* El texto no se encoje */
+    padding-bottom: 15px; /* Espacio entre el texto y el gráfico */
+    padding-right: 5px; /* Asegurar padding dentro del contenedor */
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
+/* Canvas del gráfico de gases */
+#node-gas-chart {
+    flex-shrink: 0; /* El canvas no se encoje */
+    width: 100%;
+    height: 180px; /* Mantener una altura fija para el gráfico */
+    margin-top: 0; /* Ya tenemos padding-bottom en el texto */
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
 footer {
     text-align: center;
     color: #888;
     padding: 18px 0 12px 0;
     font-size: 0.95em;
+    flex-shrink: 0; /* Evita que el footer se encoja */
+    box-sizing: border-box; /* Asegurar box-sizing */
+}
+
+@keyframes shimmer-rgb {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
 }

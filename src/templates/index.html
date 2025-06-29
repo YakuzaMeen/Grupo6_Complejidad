@@ -2,34 +2,93 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Complejidad Algorítmica - Grupo 6</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoRegula All-in-One - Grupo 6</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- D3.js CDN para visualización de grafos -->
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Leaflet.markercluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <!-- Chart.js CDN (Para Módulo 4: Panel Educativo e Informativo) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- D3.js CDN (mantener por ahora, aunque no se use directamente para el mapa) -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
     <header>
-        <h1>Complejidad Algorítmica - Grupo 6</h1>
+        <h1>EcoRegula All-in-One</h1>
     </header>
     <main style="display: flex; gap: 32px; margin: 0 32px 32px 32px;">
         <section style="flex: 2;">
-            <div id="graph-container" style="background: #fff; border-radius: 12px; min-height: 400px; margin-bottom: 16px; box-shadow: 0 2px 8px #0001;"></div>
+            <!-- Contenedor para el mapa Leaflet -->
+            <div id="map-container" style="background: #fff; border-radius: 12px; height: 500px; margin-bottom: 16px; box-shadow: 0 2px 8px #0001;"></div>
             <div id="controls" style="margin-bottom: 16px;">
-                <button id="load-graph" class="btn-primary">Cargar Grafo</button>
+                <button id="load-graph" class="btn-primary"><span>Cargar Grafo en Mapa</span></button>
             </div>
-            <div id="mst-info"></div>
-            <div id="node-info"></div>
         </section>
+
+        <!-- Columna Derecha - Contenedor de Pestañas/Paneles -->
         <aside style="flex: 1;">
-            <div id="log-panel">
-                <h2>Bitácora de Ejecución</h2>
-                <div id="log-output"></div>
+            <div id="tab-container">
+                <!-- Botones de Navegación (Tabs) -->
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-panel-id="log-panel-content"><span>Bitácora</span></button>
+                    <button class="tab-button" data-panel-id="route-panel-content"><span>Rutas</span></button>
+                    <button class="tab-button" data-panel-id="mst-panel-content"><span>MST</span></button>
+                    <button class="tab-button" data-panel-id="node-info-panel-content"><span>Nodo Info</span></button>
+                </div>
+
+                <!-- Contenedores de Contenido (Paneles) -->
+                <div id="log-panel-content" class="tab-content">
+                    <h2>Bitácora de Ejecución</h2>
+                    <div id="log-output"></div>
+                </div>
+
+                <div id="route-panel-content" class="tab-content" style="display: none;">
+                    <h2>Módulo 3: Planificación de Rutas Óptimas</h2>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="origin-node-id" style="display: block; margin-bottom: 5px; font-weight: bold;">Origen (ID de Nodo):</label>
+                            <input type="text" id="origin-node-id" placeholder="Ej: 277229_909597_..." class="input-field">
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="destination-node-id" style="display: block; margin-bottom: 5px; font-weight: bold;">Destino (ID de Nodo):</label>
+                            <input type="text" id="destination-node-id" placeholder="Ej: 277230_123456_..." class="input-field">
+                        </div>
+                    </div>
+                    <button id="calculate-route-btn" class="btn-primary"><span>Calcular Ruta Óptima</span></button>
+                    <div id="route-info" style="margin-top: 15px; font-weight: bold; color: #1976d2;"></div>
+                </div>
+
+                <div id="mst-panel-content" class="tab-content" style="display: none;">
+                    <h2>Peso Total del Árbol de Expansión Mínima (MST)</h2>
+                    <div id="mst-info" class="mst-info-block">
+                        <!-- El contenido del MST se renderizará aquí -->
+                    </div>
+                </div>
+                
+                <div id="node-info-panel-content" class="tab-content" style="display: none;">
+                    <h2>Datos del Nodo Seleccionado</h2>
+                    <div id="node-info-details" class="node-block" style="padding-bottom: 0;">
+                        <!-- Nuevo div para el contenido textual -->
+                        <div id="node-text-content">
+                            <!-- Aquí se mostrará la información textual del nodo -->
+                        </div>
+                        <!-- Canvas para el gráfico, siempre presente -->
+                        <canvas id="node-gas-chart" style="width: 100%; height: 180px; margin-top: 15px;"></canvas>
+                    </div>
+                </div>
             </div>
         </aside>
     </main>
     <footer>
         <p>Desarrollado por YakuzaMeen - U202212214@upc.edu.pe</p>
     </footer>
+    <!-- Leaflet.js JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet.markercluster JavaScript -->
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
