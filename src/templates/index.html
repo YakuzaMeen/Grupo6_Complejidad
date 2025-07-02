@@ -10,9 +10,9 @@
     <!-- Leaflet.markercluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-    <!-- Chart.js CDN (Para Módulo 4: Panel Educativo e Informativo) -->
+    <!-- Chart.js CDN (No se usará directamente, pero se mantiene si es necesario) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- D3.js CDN (mantener por ahora, aunque no se use directamente para el mapa) -->
+    <!-- D3.js CDN (mantener por ahora) -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
@@ -21,6 +21,14 @@
     </header>
     <main style="display: flex; gap: 32px; margin: 0 32px 32px 32px;">
         <section style="flex: 2;">
+            <!-- NUEVO: Contenedor para la Alerta Inteligente -->
+            <!-- ¡QUITADO style="display: none;" AQUÍ! -->
+            <div id="pollution-alert" class="alert-box"> 
+                <span class="alert-icon">⚠️</span>
+                <span id="alert-message">Contaminación alta detectada en [Distrito/Zona X]</span>
+                <span class="close-alert-btn">&times;</span>
+            </div>
+
             <!-- Contenedor para el mapa Leaflet -->
             <div id="map-container" style="background: #fff; border-radius: 12px; height: 500px; margin-bottom: 16px; box-shadow: 0 2px 8px #0001;"></div>
             <div id="controls" style="margin-bottom: 16px;">
@@ -71,12 +79,29 @@
                 <div id="node-info-panel-content" class="tab-content" style="display: none;">
                     <h2>Datos del Nodo Seleccionado</h2>
                     <div id="node-info-details" class="node-block" style="padding-bottom: 0;">
-                        <!-- Nuevo div para el contenido textual -->
+                        <!-- Sección para la información básica del nodo -->
                         <div id="node-text-content">
                             <!-- Aquí se mostrará la información textual del nodo -->
                         </div>
-                        <!-- Canvas para el gráfico, siempre presente -->
-                        <canvas id="node-gas-chart" style="width: 100%; height: 180px; margin-top: 15px;"></canvas>
+
+                        <!-- Panel Educativo e Informativo (Módulo 4) -->
+                        <div id="educational-info-panel">
+                            <h3>📊 Análisis Ambiental de la Zona</h3>
+                            <div id="zone-gas-info">
+                                <!-- Información simulada de niveles de gases por zona -->
+                                <p>Cargando información...</p>
+                            </div>
+                            <h3 style="margin-top: 20px;">💡 Recomendaciones de Mitigación</h3>
+                            <div id="recommendations-info">
+                                <!-- Recomendaciones personalizadas de energía renovable/mitigación -->
+                                <p>Cargando recomendaciones...</p>
+                            </div>
+
+                            <!-- Botón para abrir el Simulador de Impacto (Módulo 5) -->
+                            <h3 style="margin-top: 20px;">⚡ Simulador de Impacto Local</h3>
+                            <button id="open-simulator-modal-btn" class="btn-primary"><span>Abrir Simulador</span></button>
+                            <div id="simulation-feedback" style="margin-top: 10px; font-weight: bold;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -85,6 +110,51 @@
     <footer>
         <p>Desarrollado por YakuzaMeen - U202212214@upc.edu.pe</p>
     </footer>
+
+    <!-- Estructura del Modal de Simulación de Impacto (Módulo 5) -->
+    <div id="simulation-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Simular Impacto Ambiental</h2>
+            <p>Selecciona una acción para ver su impacto potencial en los niveles de gases de este nodo.</p>
+            
+            <div id="simulation-options">
+                <button class="simulate-action-btn" data-action="panel_solar"><span>Simular Panel Solar</span></button>
+                <button class="simulate-action-btn" data-action="biodigestor"><span>Simular Biodigestor</span></button>
+            </div>
+
+            <div id="simulation-progress" class="progress-container" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">Simulando... <span id="progress-percentage">0%</span></p>
+            </div>
+
+            <div id="simulation-results" style="display: none;">
+                <h3>Resultados de la Simulación</h3>
+                <div class="results-grid">
+                    <div class="results-column">
+                        <h4>Antes</h4>
+                        <p>CO₂: <span id="co2-before"></span> ppm</p>
+                        <p>CH₄: <span id="ch4-before"></span> ppm</p>
+                        <p>NOx: <span id="nox-before"></span> ppm</p>
+                    </div>
+                    <div class="results-column">
+                        <h4>Después</h4>
+                        <p>CO₂: <span id="co2-after"></span> ppm</p>
+                        <p>CH₄: <span id="ch4-after"></span> ppm</p>
+                        <p>NOx: <span id="nox-after"></span> ppm</p>
+                    </div>
+                </div>
+                <div id="simulation-tips" class="simulation-tips-box">
+                    <h4>Tips y Mejoras:</h4>
+                    <ul>
+                        <li>¡Gran impacto! Considera implementar esta solución a gran escala.</li>
+                        <li>La combinación de tecnologías puede ofrecer mejores resultados.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet.js JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Leaflet.markercluster JavaScript -->

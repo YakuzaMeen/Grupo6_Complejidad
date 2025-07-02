@@ -1,12 +1,11 @@
 from flask import Flask, render_template, jsonify, request 
-import grafo_logic as erg
+import grafo_logic as erg # erg es tu modulo grafo_logic.py
 import logging
 from pyproj import CRS, Transformer
 from shapely.geometry import Point
 import networkx as nx 
 import random 
 import math 
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -15,6 +14,15 @@ app = Flask(
     static_folder='src/static',
     template_folder='src/templates'
 )
+
+# Configuración de la base de datos PostgreSQL (Duplicado para consistencia, pero grafo_logic también lo tiene)
+DB_CONFIG = {
+    'dbname': 'ecoregula_db',
+    'user': 'yakuza',
+    'password': '1305',
+    'host': 'localhost',
+    'port': '5432'
+}
 
 CRS_GEOGRAPHIC = "EPSG:4326" 
 CRS_PROJECTED = "EPSG:32718" 
@@ -45,15 +53,14 @@ def api_analisis():
             log.append(msg)
             print(msg)
 
-        max_rows_for_display = 10000 
-
+        max_rows_for_display = 300 
 
         gdf_gas = erg.cargar_tramos_gas(logprint, max_rows=max_rows_for_display) 
         if gdf_gas.empty:
             raise ValueError("No se cargaron tramos de gas válidos desde la base de datos.")
         
         gdf_gas_proj = gdf_gas.to_crs(CRS_PROJECTED)
-        logprint(f"  Geometrías proyectadas a {CRS_PROJECTED} para cálculos métricos precisos.")
+        logprint(f"   Geometrías proyectadas a {CRS_PROJECTED} para cálculos métricos precisos.")
         log.append("")
 
         G = erg.construir_grafo_red(gdf_gas, gdf_gas_proj, logprint)
@@ -95,7 +102,7 @@ def api_analisis():
 
         nodo_inicial = erg.encontrar_nodo_inicial(G, center_point_proj, logprint)
         if nodo_inicial is None:
-            log.append("  Advertencia: No se encontró un nodo inicial cercano para los algoritmos. El grafo puede estar vacío o muy disperso.")
+            log.append("   Advertencia: No se encontró un nodo inicial cercano para los algoritmos. El grafo puede estar vacío o muy disperso.")
             dijkstra = {}
             bellman = {}
             mst_graph = nx.Graph()
@@ -114,38 +121,42 @@ def api_analisis():
         # Esto se hace iterando sobre gdf_gas_proj para obtener CODTRAMO y longitud
         # y generar los gases simulados en base a los KMeans (si aplica).
         # Usaremos el nodo REAL (no redondeado) como clave aquí.
-        temp_node_properties = {} 
-        for idx, row_proj in gdf_gas_proj.iterrows():
-            row_geo = gdf_gas.loc[idx] 
-            for i in range(len(row_proj.geometry.coords)):
-                actual_proj_coord_point = (row_proj.geometry.coords[i][0], row_proj.geometry.coords[i][1]) # Tupla exacta del punto
+        
+        # Primero, asignar los niveles de gases simulados y otros atributos a los nodos del GLOBAL_GRAPH
+        for i, actual_proj_coord_tuple in enumerate(G.nodes()):
+            node_kmeans_label = -1 
+            if i < len(kmeans_labels):
+                node_kmeans_label = int(kmeans_labels[i])
 
-                node_kmeans_label = -1 
-                try:
-                    # Buscar el nodo exacto en la lista de nodos del grafo para obtener su etiqueta KMeans
-                    node_index_in_G_nodes = list(G.nodes()).index(actual_proj_coord_point) 
-                    if node_index_in_G_nodes < len(kmeans_labels):
-                        node_kmeans_label = int(kmeans_labels[node_index_in_G_nodes])
-                except ValueError:
-                    pass 
+            base_co2 = 50 + node_kmeans_label * 10 if node_kmeans_label != -1 else 50 
+            base_ch4 = 10 + node_kmeans_label * 2 if node_kmeans_label != -1 else 10 
+            base_nox = 5 + node_kmeans_label * 1 if node_kmeans_label != -1 else 5 
 
-                base_co2 = 50 + node_kmeans_label * 10 if node_kmeans_label != -1 else 50 
-                base_ch4 = 10 + node_kmeans_label * 2 if node_kmeans_label != -1 else 10 
-                base_nox = 5 + node_kmeans_label * 1 if node_kmeans_label != -1 else 5 
+            # Asignar niveles de gases al nodo directamente en el GLOBAL_GRAPH
+            G.nodes[actual_proj_coord_tuple]['co2_level'] = round(max(0, base_co2 + random.uniform(-10, 10)), 2)
+            G.nodes[actual_proj_coord_tuple]['ch4_level'] = round(max(0, base_ch4 + random.uniform(-3, 3)), 2)
+            G.nodes[actual_proj_coord_tuple]['nox_level'] = round(max(0, base_nox + random.uniform(-1, 1)), 2)
+            G.nodes[actual_proj_coord_tuple]['kmeans'] = node_kmeans_label # Asignar KMeans al nodo
+            G.nodes[actual_proj_coord_tuple]['dijkstra'] = dijkstra.get(actual_proj_coord_tuple, None)
+            G.nodes[actual_proj_coord_tuple]['bellman'] = bellman.get(actual_proj_coord_tuple, None)
+            
+            # Asignar CODTRAMO y LONGITUD (esto es una simplificación, ya que un nodo puede ser parte de varios tramos)
+            # Podrías necesitar una lógica más sofisticada si un nodo tiene múltiples CODTRAMO/LONGITUD
+            # Por ahora, buscamos el primer tramo que contenga este nodo para obtener su CODTRAMO y LONGITUD
+            found_tramo_props = False
+            for _, row_proj in gdf_gas_proj.iterrows():
+                line_proj = row_proj['geometry']
+                if line_proj.geom_type == 'LineString':
+                    if (actual_proj_coord_tuple == line_proj.coords[0] or
+                        actual_proj_coord_tuple == line_proj.coords[-1]):
+                        G.nodes[actual_proj_coord_tuple]['codtramo'] = str(row_proj["CODTRAMO"]) if "CODTRAMO" in row_proj else ""
+                        G.nodes[actual_proj_coord_tuple]['longitud'] = float(row_proj["LONGITUD"]) if "LONGITUD" in row_proj else None
+                        found_tramo_props = True
+                        break # Si ya encontramos las propiedades, salimos del bucle interno
 
-                co2_level = round(max(0, base_co2 + random.uniform(-10, 10)), 2)
-                ch4_level = round(max(0, base_ch4 + random.uniform(-3, 3)), 2)
-                nox_level = round(max(0, base_nox + random.uniform(-1, 1)), 2)
-
-                # Almacenar propiedades con la clave de la tupla REAL del nodo del grafo
-                if actual_proj_coord_point not in temp_node_properties:
-                    temp_node_properties[actual_proj_coord_point] = {
-                        "codtramo": str(row_geo["CODTRAMO"]) if "CODTRAMO" in row_geo else "",
-                        "longitud": float(row_geo["LONGITUD"]) if "LONGITUD" in row_geo else None,
-                        "co2_level": co2_level,
-                        "ch4_level": ch4_level,
-                        "nox_level": nox_level,
-                    }
+            if not found_tramo_props:
+                G.nodes[actual_proj_coord_tuple]['codtramo'] = "N/A"
+                G.nodes[actual_proj_coord_tuple]['longitud'] = None
 
 
         # 7. Preparar los datos de nodos para el frontend
@@ -153,17 +164,10 @@ def api_analisis():
         for actual_proj_coord_tuple in G.nodes(): # Iterar sobre los nodos REALES del grafo
             rounded_proj_coord_tuple = (round(actual_proj_coord_tuple[0], 6), round(actual_proj_coord_tuple[1], 6))
             
-            # Obtener las propiedades adicionales y las coordenadas geográficas del mapeo global
-            node_properties = temp_node_properties.get(actual_proj_coord_tuple, {}) # Usar el nodo REAL aquí
+            # Obtener las coordenadas geográficas del mapeo global
             lat_geo, lon_geo = GLOBAL_ACTUAL_PROJ_COORD_TO_GEO_COORD.get(actual_proj_coord_tuple, (None, None)) 
 
-            node_kmeans_label = -1
-            try:
-                node_index_in_G_nodes = list(G.nodes()).index(actual_proj_coord_tuple)
-                if node_index_in_G_nodes < len(kmeans_labels):
-                    node_kmeans_label = int(kmeans_labels[node_index_in_G_nodes])
-            except ValueError:
-                pass 
+            node_attrs = G.nodes[actual_proj_coord_tuple] # Obtener los atributos del nodo directamente del grafo
 
             nodes_for_frontend.append({
                 # El ID del nodo para el frontend sigue siendo el string de las coordenadas proyectadas redondeadas
@@ -172,14 +176,14 @@ def api_analisis():
                 "lon": lon_geo,
                 "x_proj": actual_proj_coord_tuple[0], # Coordenadas X, Y reales (sin redondear) del nodo del grafo
                 "y_proj": actual_proj_coord_tuple[1],
-                "kmeans": node_kmeans_label, 
-                "dijkstra": dijkstra.get(actual_proj_coord_tuple, None),
-                "bellman": bellman.get(actual_proj_coord_tuple, None),
-                "codtramo": node_properties.get("codtramo", "N/A"), 
-                "longitud": node_properties.get("longitud", None), 
-                "co2_level": node_properties.get("co2_level", 0), 
-                "ch4_level": node_properties.get("ch4_level", 0),
-                "nox_level": node_properties.get("nox_level", 0),
+                "kmeans": node_attrs.get("kmeans", -1), 
+                "dijkstra": node_attrs.get("dijkstra", None),
+                "bellman": node_attrs.get("bellman", None),
+                "codtramo": node_attrs.get("codtramo", "N/A"), 
+                "longitud": node_attrs.get("longitud", None), 
+                "co2_level": node_attrs.get("co2_level", 0), 
+                "ch4_level": node_attrs.get("ch4_level", 0),
+                "nox_level": node_attrs.get("nox_level", 0),
             })
         
         edges_for_frontend = []
@@ -300,5 +304,53 @@ def calculate_optimal_route_api():
         traceback.print_exc()
         return jsonify({"message": f"Error interno del servidor: {str(e)}"}), 500
 
+# NUEVO: Endpoint para el Simulador de Impacto (Módulo 5)
+@app.route('/api/simulate-impact', methods=['POST'])
+def simulate_impact_api():
+    if GLOBAL_GRAPH is None:
+        return jsonify({'message': 'El grafo no ha sido cargado. Por favor, carga el grafo primero.', 'type': 'error'}), 503
+
+    data = request.get_json()
+    node_id_str = data.get('node_id')
+    action_type = data.get('action_type')
+
+    if not node_id_str or not action_type:
+        return jsonify({'message': 'Se requieren ID de nodo y tipo de acción para la simulación.', 'type': 'error'}), 400
+
+    try:
+        # Obtener las coordenadas PROYECTADAS REDONDEADAS del ID string del frontend
+        rounded_proj_coord = GLOBAL_NODE_ID_STRING_TO_ROUNDED_PROJ_COORD.get(node_id_str.strip())
+        if rounded_proj_coord is None:
+            return jsonify({'message': f'Nodo con ID "{node_id_str.strip()}" no encontrado para simulación.', 'type': 'error'}), 404
+
+        # Obtener las coordenadas EXACTAS del grafo a partir de las redondeadas
+        actual_proj_coord = GLOBAL_ROUNDED_PROJ_COORD_TO_ACTUAL_PROJ_COORD.get(rounded_proj_coord)
+        if actual_proj_coord is None or actual_proj_coord not in GLOBAL_GRAPH.nodes:
+            return jsonify({'message': f'Nodo "{node_id_str.strip()}" no es un nodo válido en el grafo (problema de mapeo interno).', 'type': 'error'}), 404
+
+        # Llamar a la lógica de simulación en grafo_logic.py
+        # Esta función modificará los atributos del nodo directamente en GLOBAL_GRAPH
+        erg.simulate_node_impact(GLOBAL_GRAPH, actual_proj_coord, action_type)
+
+        # Devolver los nuevos niveles de gases simulados del nodo que ya está en GLOBAL_GRAPH
+        updated_node_attrs = GLOBAL_GRAPH.nodes[actual_proj_coord]
+
+        return jsonify({
+            'node_id': node_id_str, # Devolvemos el ID string original para el frontend
+            'new_co2': updated_node_attrs.get('co2_level', 0),
+            'new_ch4': updated_node_attrs.get('ch4_level', 0),
+            'new_nox': updated_node_attrs.get('nox_level', 0),
+            'message': 'Simulación aplicada con éxito.'
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error simulando impacto para nodo {node_id_str}: {e}", exc_info=True)
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Error interno del servidor al simular impacto: {e}', 'type': 'error'}), 500
+
+
 if __name__ == '__main__':
+    print("Starting Flask app...")
     app.run(debug=True)
+
